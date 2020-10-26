@@ -1,0 +1,149 @@
+
+
+service: polly # NOTE: update this with your service name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-west-1'}
+  stackName: ${self:provider.stage}-${self:service}-stack
+  apiName: ${self:provider.stage}-polly # Use a custom name for the API Gateway API
+  #profile: production # The default profile to use with this service
+  memorySize: 1024 # Overwrite the default memory size. Default is 1024
+  timeout: 10 # The default is 6 seconds. Note: API Gateway current maximum is 30 seconds
+  logRetentionInDays: 1 # Set the default RetentionInDays for a CloudWatch LogGroup
+
+custom: 
+  accountId: 70818383 #Your unique AWS ID (needed for the SNS ARN)
+  s3BucketName: unique-name #Give some string to make s3 bucket unique
+
+# you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:*"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "sns:*"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "polly:*"
+      Resource: "*"
+
+
+# you can define service wide environment variables here
+  environment:
+    tableName: ${self:provider.stage}-polly-text
+    snsTopic: arn:aws:sns: ${self:provider.region}:${self:custom.accountId}:${self:provider.stage}-newtext-topic
+    s3MP3folder: ${self:provider.stage}-polly-${self:custom.s3BucketName}-bucket
+
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.js
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.js
+#    - exclude-me-dir/**
+
+functions:
+  audio:
+    handler: functions/audio-get.handler
+    name: ${self:provider.stage}-${self:service}-getAudio
+    events:
+      - http:
+          path: audio
+          method: get
+
+  text:
+    handler: functions/text-post.handler
+    name: ${self:provider.stage}-${self:service}-postText
+    events:
+      - http:
+          path: text
+          method: post
+
+  convert:
+    handler: functions/convert-text-to-audio.handler
+    name: ${self:provider.stage}-${self:service}-convertTextToAudio
+    events:
+      - sns : ${self:provider.stage}-newtext-topic
+
+
+#    The following are a few example events you can configure
+#    NOTE: Please make sure to change your handler code to work with those events
+#    Check the event documentation for details
+#    events:
+#      - http:
+#          path: users/create
+#          method: get
+#      - s3: ${env:BUCKET}
+#      - schedule: rate(10 minutes)
+#      - sns: greeter-topic
+#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
+#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
+#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
+#      - iot:
+#          sql: "SELECT * FROM 'some_topic'"
+#      - cloudwatchEvent:
+#          event:
+#            source:
+#              - "aws.ec2"
+#            detail-type:
+#              - "EC2 Instance State-change Notification"
+#            detail:
+#              state:
+#                - pending
+#      - cloudwatchLog: '/aws/lambda/hello'
+#      - cognitoUserPool:
+#          pool: MyUserPool
+#          trigger: PreSignUp
+
+#    Define function environment variables here
+#    environment:
+#      variable2: value2
+
+# you can add CloudFormation resource templates here
+#resources:
+#  Resources:
+#    SnsTopics:
+#      Type: AWS::SNS::Topic
+#      Properties:
+#        DisplayName: ${self:provider.stage}-newtext
+#        TopicName: ${self:provider.stage}-newtext-topic
+resources:
+  Resources:
+    DynamoDBConvertData:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.stage}-polly-text
+        KeySchema:
+          - AttributeName: item_id
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: item_id
+            AttributeType: S
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    PollyS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl:  PublicRead
+        BucketName: ${self:provider.stage}-polly-${self:custom.s3BucketName}-bucket
+
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"

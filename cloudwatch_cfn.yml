@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: Apache-2.0
+Description: 'AWS CloudFormation for Cloudwatch monitoring'
+
+#Parameters
+Parameters:
+  EmailRecipient:
+    Type: String
+    Default: arnaud.charlier@gmail.com
+    Description: Email Address used in the Listener Lambda to send initial message.
+  Environment:
+    Type: String
+    AllowedValues:
+      - dev
+      - test
+      - prod
+      - sandbox
+    ConstraintDescription: Values can only be dev, test or prod
+    Description: The environment where the stack will be deployed. The environment value will be used to prefix all the different resources of the stack. Defaults to dev.
+  ApplicationId:
+    Type: String
+    AllowedPattern: '[a-z0-9\-]+'
+    Description: Must contain your business purpose string.
+  CompanyId:
+    Type: String
+    Default: jetlab
+    Description: Contain a string to create a unique bucket.
+  LambdaToMonitor:
+    Type: String
+    Description: Contain a Lambda Name
+
+
+
+#Resources
+Resources:
+  #SNS Topics Fulfilled by API Event
+  AlarmSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Join ["", [!Ref Environment, "-", !Ref ApplicationId,"-alarm"]]
+      TopicName: !Join ["", [!Ref Environment, "-", !Ref ApplicationId,"-alarm" ]]
+      Subscription:
+        - Endpoint: !Ref EmailRecipient
+          Protocol: email
+
+  CloudwatchAlarmError:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmDescription: Trigger alarm when Lambda Error is too high
+      AlarmActions:
+        - !Ref AlarmSNSTopic
+      AlarmName: !Join ["", [ !Ref LambdaToMonitor,"-high-error-alarm" ]]
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 1
+      Period: 60
+      Threshold: 0.0
+      Statistic: Average
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaToMonitor
+      TreatMissingData: ignore
+
+  CloudwatchAlarmDuration:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmDescription: Trigger alarm when Lambda Duration is too high
+      AlarmActions:
+        - !Ref AlarmSNSTopic
+      AlarmName: !Join ["", [ !Ref LambdaToMonitor,"-high-duration-alarm" ]]
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 1
+      Period: 60
+      Threshold: 500
+      Statistic: Average
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaToMonitor
+      TreatMissingData: ignore
+
+  CloudwatchAlarmThrottle:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ActionsEnabled: true
+      AlarmDescription: Trigger alarm when Lambda is Throttled
+      AlarmActions:
+        - !Ref AlarmSNSTopic
+      AlarmName: !Join ["", [ !Ref LambdaToMonitor,"-throttle-alarm" ]]
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 1
+      Period: 60
+      Threshold: 0.0
+      Statistic: Sum
+      MetricName: Throttle
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaToMonitor
+      TreatMissingData: ignore
+
+  CloudwatchDashBoard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Join ["", [!Ref Environment, "-", !Ref ApplicationId]]
+      DashboardBody: "{\"widgets\":[{\"type\":\"metric\",\"x\":0,\"y\":0,\"width\":12,\"height\":6,\"properties\":{\"metrics\":[[\"AWS/ApiGateway\",\"Count\",\"ApiName\",\"dev-polly\",{\"period\":60,\"stat\":\"Sum\"}],[\".\",\"IntegrationLatency\",\".\",\".\",{\"period\":60}],[\".\",\"Latency\",\".\",\".\",{\"period\":60}],[\".\",\"4XXError\",\".\",\".\",{\"period\":60,\"stat\":\"Sum\"}],[\".\",\"5XXError\",\".\",\".\",{\"period\":60,\"stat\":\"Sum\"}]],\"view\":\"timeSeries\",\"stacked\":false,\"region\":\"eu-west-1\",\"title\":\"Api Polly\",\"period\":300}},{\"type\":\"metric\",\"x\":0,\"y\":6,\"width\":24,\"height\":3,\"properties\":{\"metrics\":[[\"AWS/Lambda\",\"Invocations\",\"FunctionName\",\"dev-polly-convertTextToAudio\",{\"stat\":\"Sum\"}],[\".\",\"Duration\",\".\",\".\"],[\".\",\"Errors\",\".\",\".\",{\"stat\":\"Sum\"}],[\".\",\"Throttles\",\".\",\".\",{\"stat\":\"Sum\"}]],\"view\":\"singleValue\",\"region\":\"eu-west-1\",\"title\":\"Lambda convertTextToAudio\",\"period\":300}},{\"type\":\"metric\",\"x\":0,\"y\":9,\"width\":24,\"height\":3,\"properties\":{\"metrics\":[[\"AWS/Lambda\",\"Invocations\",\"FunctionName\",\"dev-polly-postText\",{\"stat\":\"Sum\"}],[\".\",\"Duration\",\".\",\".\"],[\".\",\"Errors\",\".\",\".\",{\"stat\":\"Sum\"}],[\".\",\"Throttles\",\".\",\".\",{\"stat\":\"Sum\"}]],\"view\":\"singleValue\",\"title\":\"Lambda postText\",\"region\":\"eu-west-1\",\"period\":300}},{\"type\":\"metric\",\"x\":0,\"y\":12,\"width\":24,\"height\":3,\"properties\":{\"metrics\":[[\"AWS/Lambda\",\"Invocations\",\"FunctionName\",\"dev-polly-getAudio\",{\"stat\":\"Sum\"}],[\".\",\"Duration\",\".\",\".\"],[\".\",\"Errors\",\".\",\".\",{\"stat\":\"Sum\"}],[\".\",\"Throttles\",\".\",\".\",{\"stat\":\"Sum\"}]],\"view\":\"singleValue\",\"region\":\"eu-west-1\",\"title\":\"Lambda getAudio\",\"period\":300}},{\"type\":\"metric\",\"x\":12,\"y\":0,\"width\":12,\"height\":6,\"properties\":{\"metrics\":[[\"AWS/Lambda\",\"Duration\"],[\".\",\"Invocations\",{\"color\":\"#2ca02c\",\"stat\":\"Sum\"}],[\".\",\"Errors\",{\"color\":\"#d62728\",\"stat\":\"Sum\"}],[\".\",\"ConcurrentExecutions\",{\"color\":\"#9467bd\",\"stat\":\"Sum\"}]],\"view\":\"timeSeries\",\"stacked\":false,\"region\":\"eu-west-1\",\"title\":\"Lambda General\",\"period\":300}}]}"
+#Output
+#Outputs:
+#  TableName:
+#    Value: !Ref 'purposeTable'
+#    Description: Table name of the newly created DynamoDB table

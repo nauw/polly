@@ -1,0 +1,105 @@
+{
+	"info": {
+		"_postman_id": "d9f588c6-7456-4adb-9dd6-d66abb90f051",
+		"name": "dev-polly",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "audio",
+			"item": [
+				{
+					"name": "Get-Audio",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://l4ntny6ny9.execute-api.eu-west-1.amazonaws.com/dev/audio",
+							"protocol": "https",
+							"host": [
+								"l4ntny6ny9",
+								"execute-api",
+								"eu-west-1",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"audio"
+							],
+							"query": [
+								{
+									"key": "postid",
+									"value": "3b1766ca-9cef-4719-b606-a84b49edb6f0",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Folder for audio"
+		},
+		{
+			"name": "text",
+			"item": [
+				{
+					"name": "Post Text to speech",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"text\":\"This text is a bit bigger than before\"\n}"
+						},
+						"url": {
+							"raw": "https://l4ntny6ny9.execute-api.eu-west-1.amazonaws.com/dev/polly/text",
+							"protocol": "https",
+							"host": [
+								"l4ntny6ny9",
+								"execute-api",
+								"eu-west-1",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"polly",
+								"text"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post Text to speech Copy",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"text\":\"This text is a bit bigger than before\"\n}"
+						},
+						"url": {
+							"raw": "https://polly.dev.jetlab.io/polly/text",
+							"protocol": "https",
+							"host": [
+								"polly",
+								"dev",
+								"jetlab",
+								"io"
+							],
+							"path": [
+								"polly",
+								"text"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Folder for text"
+		}
+	]
+}
