@@ -26,3 +26,10 @@ set the following values
 ## Deploy
 
     sls deploy
+
+
+
+## Postman
+
+Import the dev-polly.postman_collection.json into your Postman
+Replace Get and Post method with the right URL

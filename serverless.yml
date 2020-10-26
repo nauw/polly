@@ -2,6 +2,11 @@
 
 service: polly # NOTE: update this with your service name
 
+custom: 
+  accountId: 237660716851 #Your unique AWS ID (needed for the SNS ARN)
+  s3BucketName: acr #Give some string to make s3 bucket unique
+
+  
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
@@ -18,9 +23,13 @@ provider:
   timeout: 10 # The default is 6 seconds. Note: API Gateway current maximum is 30 seconds
   logRetentionInDays: 1 # Set the default RetentionInDays for a CloudWatch LogGroup
 
-custom: 
-  accountId: 70818383 #Your unique AWS ID (needed for the SNS ARN)
-  s3BucketName: unique-name #Give some string to make s3 bucket unique
+# you can define service wide environment variables here, they will be accessible into your Lambda
+  environment:
+    tableName: ${self:provider.stage}-polly-text
+    snsTopic: arn:aws:sns:${self:provider.region}:${self:custom.accountId}:${self:provider.stage}-newtext-topic
+    s3MP3folder: ${self:provider.stage}-polly-${self:custom.s3BucketName}-bucket
+
+
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
@@ -42,11 +51,7 @@ custom:
       Resource: "*"
 
 
-# you can define service wide environment variables here
-  environment:
-    tableName: ${self:provider.stage}-polly-text
-    snsTopic: arn:aws:sns: ${self:provider.region}:${self:custom.accountId}:${self:provider.stage}-newtext-topic
-    s3MP3folder: ${self:provider.stage}-polly-${self:custom.s3BucketName}-bucket
+
 
 # you can add packaging information here
 #package:
