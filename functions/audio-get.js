@@ -27,7 +27,7 @@ module.exports.handler = async (event, context) => {
     TableName: tableName
   }
 
-
+//If we pass the UUID of the record, we retrieve only one Item , if no paramter passed to DynamoDB, we do a Scan on the Table
   if(event.queryStringParameters != null && event.queryStringParameters.postid != null ){
       let postId = event.queryStringParameters.postid;
       console.log(postId);
@@ -56,8 +56,6 @@ module.exports.handler = async (event, context) => {
     }
 
   }
-
-
 
 
 };

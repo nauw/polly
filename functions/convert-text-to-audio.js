@@ -13,6 +13,7 @@ AWS.config.update({
         agent: sslAgent
     }
 });
+// setup AWS Polly Text to Speech
 const pollyAws = new AWS.Polly(
     {
         signatureVersion: 'v4',
@@ -26,13 +27,15 @@ const DynamoDB = new AWS.DynamoDB.DocumentClient({
 const s3Bucket = process.env.s3MP3folder;
 const tableName = process.env.tableName;
 
+// Entry point , the Event is an Message Received in the SNS topics
 module.exports.handler = async (event, context) => {
-    let message = JSON.parse(event.Records[0].Sns.Message);
+    let message = JSON.parse(event.Records[0].Sns.Message); //Parsing the SNS message received
     let text = message.text;
     let item_id = message.item_id;
     let date = (Math.floor(moment().format('x') / 1000));
 
     console.log("In convert function");
+//Paramter to configure the Polly Output
     let params = {
         OutputFormat: "mp3",
         OutputS3BucketName: s3Bucket,
@@ -43,10 +46,10 @@ module.exports.handler = async (event, context) => {
 
 
 
-
-
+//try catch
     try {
         return pollyAws.startSpeechSynthesisTask(params).promise().then(audio => {
+            //if we receive an audio, we change the item in DynamoDB to DONE, plus adding the URL from the file
             if (audio) {
                 let dbParams = {
                     TableName: tableName,
