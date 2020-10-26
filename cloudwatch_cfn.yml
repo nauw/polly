@@ -7,7 +7,7 @@ Description: 'AWS CloudFormation for Cloudwatch monitoring'
 Parameters:
   EmailRecipient:
     Type: String
-    Default: arnaud.charlier@gmail.com
+    Default: alarm@test.test.be
     Description: Email Address used in the Listener Lambda to send initial message.
   Environment:
     Type: String
