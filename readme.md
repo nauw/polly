@@ -15,6 +15,6 @@ open the serverless.yml
 
 set the following values
 
-  custom: 
-    accountId: 70818383 #Your unique AWS ID (needed for the SNS ARN)
-    s3BucketName: unique-name #Give some string to make s3 bucket unique
+    custom: 
+        accountId: 70818383 #Your unique AWS ID (needed for the SNS ARN)
+        s3BucketName: unique-name #Give some string to make s3 bucket unique
