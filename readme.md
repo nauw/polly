@@ -18,3 +18,11 @@ set the following values
     custom: 
         accountId: 70818383 #Your unique AWS ID (needed for the SNS ARN)
         s3BucketName: unique-name #Give some string to make s3 bucket unique
+
+# Setup your AWS CLI in your bash
+
+    export AWS_PROFILE=your_iam_user
+
+# Deploy
+
+    sls deploy
